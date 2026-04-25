@@ -1,0 +1,3 @@
+display_name: Pull Facebook Birthdays
+short_description: Sync Facebook birthdays to Calendar
+default_prompt: Pull my Facebook friends birthday list from my logged-in browser and add the birthdays to Google Calendar using background-computer-use.
