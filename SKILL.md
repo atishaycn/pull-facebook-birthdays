@@ -1,6 +1,6 @@
 ---
 name: pull-facebook-birthdays
-description: Use when Codex needs to pull friends' birthdays from Facebook in the user's already logged-in browser and add them to Google Calendar through the user's already logged-in browser using the local background-computer-use runtime. Trigger for requests about Facebook birthdays, friend birthday extraction, birthday calendar sync, or adding Facebook friend birthdays to Google Calendar.
+description: Use when Codex needs to pull friends' birthdays from Facebook in the user's already logged-in browser and add them to Google Calendar through the user's already logged-in browser using the actuallyepic/background-computer-use runtime. Trigger for requests about Facebook birthdays, friend birthday extraction, birthday calendar sync, or adding Facebook friend birthdays to Google Calendar.
 ---
 
 # Pull Facebook Birthdays
@@ -13,29 +13,33 @@ Use the user's existing browser sessions to transfer Facebook friend birthdays i
 
 1. Ask which browser to use unless the user already specified one. Accept browser names such as Safari, Chrome, Arc, Edge, or Firefox.
 2. Tell the user the chosen browser must already be logged into both Facebook and Google Calendar.
-3. Start or connect to `/Users/suns/Developer/background-computer-use` and read `$TMPDIR/background-computer-use/runtime-manifest.json` for the runtime `baseURL`; never assume a fixed port.
-4. Call `/v1/bootstrap` and stop if Accessibility or Screen Recording permissions are not ready.
-5. Use `/v1/list_apps`, `/v1/list_windows`, and `/v1/get_window_state` with `imageMode: "path"` to target the chosen browser.
-6. Navigate to Facebook's birthday surface and collect visible friend birthday records.
-7. Navigate to Google Calendar and add annual all-day birthday events after checking for likely duplicates.
-8. Verify a sample of created events in Google Calendar and report counts: found, skipped duplicates, created, failed or ambiguous.
+3. Start or connect to `https://github.com/actuallyepic/background-computer-use`. If the checkout is missing, run `scripts/ensure_background_computer_use.sh` from this skill repo to clone/update it into `$HOME/Developer/background-computer-use`, start it, and verify the manifest. Use `BACKGROUND_COMPUTER_USE_DIR=/path/to/background-computer-use` only when the user already has a different checkout.
+4. Read `$TMPDIR/background-computer-use/runtime-manifest.json` for the runtime `baseURL`; never assume a fixed port.
+5. Call `/v1/bootstrap` and stop if Accessibility or Screen Recording permissions are not ready.
+6. Use `/v1/list_apps`, `/v1/list_windows`, and `/v1/get_window_state` with `imageMode: "path"` to target the chosen browser.
+7. Navigate to Facebook's birthday surface and collect visible friend birthday records.
+8. Navigate to Google Calendar and add annual all-day birthday events after checking for likely duplicates.
+9. Verify a sample of created events in Google Calendar and report counts: found, skipped duplicates, created, failed or ambiguous.
 
 ## Background-Computer-Use Helper
 
 Prefer the bundled helper for API calls:
 
 ```bash
-python3 pull-facebook-birthdays/scripts/bcu_client.py bootstrap
-python3 pull-facebook-birthdays/scripts/bcu_client.py list-apps
-python3 pull-facebook-birthdays/scripts/bcu_client.py list-windows --app "Google Chrome"
-python3 pull-facebook-birthdays/scripts/bcu_client.py state --window "WINDOW_ID" --image-mode path
+cd /path/to/pull-facebook-birthdays
+scripts/ensure_background_computer_use.sh
+python3 scripts/bcu_client.py bootstrap
+python3 scripts/bcu_client.py list-apps
+python3 scripts/bcu_client.py list-windows --app "Google Chrome"
+python3 scripts/bcu_client.py state --window "WINDOW_ID" --image-mode path
+python3 scripts/bcu_client.py click --window "WINDOW_ID" --display-index 12
+python3 scripts/bcu_client.py scroll --window "WINDOW_ID" --display-index 3 --direction down
 ```
 
-If the runtime is not running, start it from its repo:
+The setup script depends on the upstream runtime and does not vendor it into this skill:
 
 ```bash
-cd /Users/suns/Developer/background-computer-use
-./script/start.sh
+scripts/ensure_background_computer_use.sh
 ```
 
 Read `references/background_computer_use.md` when route shapes, startup checks, or action payload examples are needed.

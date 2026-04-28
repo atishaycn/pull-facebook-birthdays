@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small CLI wrapper for the local background-computer-use API."""
+"""Small CLI wrapper for the background-computer-use loopback API."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ MANIFEST = Path(os.environ.get("TMPDIR", "/tmp")) / "background-computer-use" / 
 def load_base_url() -> str:
     if not MANIFEST.exists():
         raise SystemExit(
-            f"Runtime manifest not found at {MANIFEST}. Start /Users/suns/Developer/background-computer-use/script/start.sh first."
+            f"Runtime manifest not found at {MANIFEST}. Run scripts/ensure_background_computer_use.sh first."
         )
     try:
         data = json.loads(MANIFEST.read_text())
@@ -51,6 +51,10 @@ def print_json(value: Any) -> None:
     print(json.dumps(value, indent=2, sort_keys=True))
 
 
+def display_index_target(index: int) -> dict[str, Any]:
+    return {"kind": "display_index", "value": index}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Call background-computer-use routes.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -68,7 +72,7 @@ def main() -> int:
 
     click = sub.add_parser("click")
     click.add_argument("--window", required=True)
-    click.add_argument("--element-index", type=int)
+    click.add_argument("--display-index", type=int)
     click.add_argument("--x", type=float)
     click.add_argument("--y", type=float)
     click.add_argument("--click-count", type=int, default=1)
@@ -76,7 +80,7 @@ def main() -> int:
 
     type_text = sub.add_parser("type-text")
     type_text.add_argument("--window", required=True)
-    type_text.add_argument("--element-index", type=int)
+    type_text.add_argument("--display-index", type=int)
     type_text.add_argument("--text", required=True)
     type_text.add_argument("--image-mode", default="path", choices=["path", "base64", "omit"])
 
@@ -84,6 +88,13 @@ def main() -> int:
     press_key.add_argument("--window", required=True)
     press_key.add_argument("--key", required=True)
     press_key.add_argument("--image-mode", default="path", choices=["path", "base64", "omit"])
+
+    scroll = sub.add_parser("scroll")
+    scroll.add_argument("--window", required=True)
+    scroll.add_argument("--display-index", type=int, required=True)
+    scroll.add_argument("--direction", default="down", choices=["up", "down", "left", "right"])
+    scroll.add_argument("--pages", type=int, default=1)
+    scroll.add_argument("--image-mode", default="path", choices=["path", "base64", "omit"])
 
     args = parser.parse_args()
 
@@ -99,21 +110,35 @@ def main() -> int:
         print_json(request("POST", "/v1/get_window_state", {"window": args.window, "imageMode": args.image_mode, "maxNodes": args.max_nodes}))
     elif args.command == "click":
         payload: dict[str, Any] = {"window": args.window, "clickCount": args.click_count, "imageMode": args.image_mode}
-        if args.element_index is not None:
-            payload["elementIndex"] = args.element_index
+        if args.display_index is not None:
+            payload["target"] = display_index_target(args.display_index)
         elif args.x is not None and args.y is not None:
             payload["x"] = args.x
             payload["y"] = args.y
         else:
-            raise SystemExit("click requires --element-index or both --x and --y")
+            raise SystemExit("click requires --display-index or both --x and --y")
         print_json(request("POST", "/v1/click", payload))
     elif args.command == "type-text":
         payload = {"window": args.window, "text": args.text, "focusAssistMode": "focus_and_caret_end", "imageMode": args.image_mode}
-        if args.element_index is not None:
-            payload["elementIndex"] = args.element_index
+        if args.display_index is not None:
+            payload["target"] = display_index_target(args.display_index)
         print_json(request("POST", "/v1/type_text", payload))
     elif args.command == "press-key":
         print_json(request("POST", "/v1/press_key", {"window": args.window, "key": args.key, "imageMode": args.image_mode}))
+    elif args.command == "scroll":
+        print_json(
+            request(
+                "POST",
+                "/v1/scroll",
+                {
+                    "window": args.window,
+                    "target": display_index_target(args.display_index),
+                    "direction": args.direction,
+                    "pages": args.pages,
+                    "imageMode": args.image_mode,
+                },
+            )
+        )
     return 0
 
 

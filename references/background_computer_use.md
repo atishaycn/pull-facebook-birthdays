@@ -1,6 +1,12 @@
 # Background Computer Use Reference
 
-Use `/Users/suns/Developer/background-computer-use` for local macOS background browser control. The runtime exposes a loopback HTTP API and writes metadata to:
+Use [`https://github.com/actuallyepic/background-computer-use`](https://github.com/actuallyepic/background-computer-use) for macOS background browser control. This skill does not vendor the runtime; bootstrap it into `$HOME/Developer/background-computer-use` by default with:
+
+```bash
+scripts/ensure_background_computer_use.sh
+```
+
+Set `BACKGROUND_COMPUTER_USE_DIR=/path/to/background-computer-use` to use another checkout. The runtime exposes a loopback HTTP API and writes metadata to:
 
 ```text
 $TMPDIR/background-computer-use/runtime-manifest.json
@@ -9,8 +15,7 @@ $TMPDIR/background-computer-use/runtime-manifest.json
 ## Startup
 
 ```bash
-cd /Users/suns/Developer/background-computer-use
-./script/start.sh
+scripts/ensure_background_computer_use.sh
 ```
 
 Then read `baseURL` from the manifest and call:
@@ -45,13 +50,13 @@ curl -s -X POST "$BASE/v1/get_window_state" -H 'content-type: application/json' 
 Click by element:
 
 ```bash
-curl -s -X POST "$BASE/v1/click" -H 'content-type: application/json' -d '{"window":"WINDOW_ID","elementIndex":12,"clickCount":1,"imageMode":"path"}'
+curl -s -X POST "$BASE/v1/click" -H 'content-type: application/json' -d '{"window":"WINDOW_ID","target":{"kind":"display_index","value":12},"clickCount":1,"imageMode":"path"}'
 ```
 
 Type text:
 
 ```bash
-curl -s -X POST "$BASE/v1/type_text" -H 'content-type: application/json' -d '{"window":"WINDOW_ID","elementIndex":4,"text":"hello","focusAssistMode":"focus_and_caret_end","imageMode":"path"}'
+curl -s -X POST "$BASE/v1/type_text" -H 'content-type: application/json' -d '{"window":"WINDOW_ID","target":{"kind":"display_index","value":4},"text":"hello","focusAssistMode":"focus_and_caret_end","imageMode":"path"}'
 ```
 
 Press keys:
